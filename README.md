@@ -11,7 +11,20 @@ Requires Python 3.7 or newer
 You will need to install the PyGithub module in the requirements file using
 `pip`, preferably in a `pyenv` environment or `virtualenv` or `pipenv` setup.
 
-To run:
+You'll need to create a file called `auth.py` which contains a personal access
+token in order to use GitHub's API to pull these stats. The format of the file
+will look like this:
+```python
+access_token = "abc123"
+```
+
+Get an access token from https://github.com/settings/tokens/new and give it 
+full "repo" and "admin:org" scopes.
+
+If you don't have this file, you'll be prompted by the software to create it
+and include it.
+
+## To run the tracker
 
 ```bash
 python tracker.py
@@ -38,3 +51,62 @@ for subsequent runs.
 Commits which are merges done on github.com (ie, merging a pull request) is
 not counted toward anyone's total.
 
+## Output Format
+
+Each repo will have a JSON file output under the `stats/` folder. If you
+run the script for a whole organization (*) then you'll get a file for each
+repo and prompted whether to consolidate the stats per user afterward.
+
+The format for a single repo will look like this:
+```json
+{
+  "archived": false,
+  "contributors": {
+    "iandouglas": {
+      "authored": {
+        "add": 9792,
+        "del": 678,
+        "total": 10470
+      },
+      "co-authored": {
+        "add": 0,
+        "del": 0,
+        "total": 0
+      },
+      "emails": [
+        "168030+iandouglas@users.noreply.github.com"
+      ],
+      "name": "ian douglas"
+    }
+  }
+}
+```
+
+Consolidated organization output will look like:
+
+```json
+{
+  "iandouglas": {
+    "authored": {
+      "add": 6669,
+      "del": 1545,
+      "total": 8214
+    },
+    "co-authored": {
+      "add": 3162,
+      "del": 29,
+      "total": 3191
+    },
+    "name": "Ian Douglas",
+    "repos": [
+      "front_end",
+      "microservice",
+      "backend"
+    ]
+  }
+}
+```
+
+---
+
+(*) you're on your own for hitting rate limits on the API.

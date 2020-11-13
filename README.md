@@ -119,3 +119,6 @@ repos
 * if co-author commits are going to be scanned:
   * better handling of repetitive errors in co-author commits
 * move users with no contributions to a different subset of the data structure
+* prompt users to sort the data by contribution counts instead of alphabetical
+* if a repo was forked, only draw stats from the data the repo was forked, if
+  that information is available

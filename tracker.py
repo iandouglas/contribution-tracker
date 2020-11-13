@@ -150,9 +150,9 @@ if __name__ == '__main__':
         print('and "admin:org" scopes)')
         sys.exit()
 
-    # repo_or_org = input('Enter GitHub Organization or Repo URL, ie "turingschool" or "turingschool/backend-curriculum-site": ')
-    # repo_or_org = repo_or_org.strip()
-    repo_or_org = "My-Solar-Garden"
+    repo_or_org = input('Enter GitHub Organization or Repo URL, ie "turingschool" or "turingschool/backend-curriculum-site": ')
+    repo_or_org = repo_or_org.strip()
+    # repo_or_org = "My-Solar-Garden"
 
     print(f'Checking {repo_or_org} for access...')
 

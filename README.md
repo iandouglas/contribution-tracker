@@ -107,6 +107,15 @@ Consolidated organization output will look like:
 }
 ```
 
+The consolidation process will also prompt you if you want to skip any "archived"
+repos
+
 ---
 
 (*) you're on your own for hitting rate limits on the API.
+
+## Future Feature Ideas
+
+* if co-author commits are going to be scanned:
+  * better handling of repetitive errors in co-author commits
+* move users with no contributions to a different subset of the data structure

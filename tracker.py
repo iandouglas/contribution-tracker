@@ -1,4 +1,4 @@
-import os
+import json
 from github import Github
 
 # https://api.github.com/orgs/{org_name}/members
@@ -8,6 +8,9 @@ from github import Github
 # https://api.github.com/repos/{org_name}/{repo_name}/contributors
 # https://api.github.com/repos/{org_name}/{repo_name}/collaborators
 # https://api.github.com/repos/{org_name}/{repo_name}/collaborators/{collaborator_name}
+
+users_file = open('users.json', 'r')
+global_users = json.loads(users_file.read())
 
 def repo_stats(repo):
     emails = {}
@@ -48,6 +51,12 @@ def repo_stats(repo):
                     print(emails)
                     login = input('enter the login for this user: ')
                     emails[email] = login.strip()
+                    remember = input('remember for next time? y/n')
+                    remember = remember.strip().lower()
+                    if remember == 'y':
+                        global_users[email] = login
+                        f = open('users.json', 'w')
+                        f.write(json.dumps(global_users))
                 co_author = emails[email]
                 contributors[co_author]['add'] += stats.additions
                 contributors[co_author]['del'] += stats.deletions

@@ -84,6 +84,7 @@ def repo_stats(repo):
                     email = line.split('<')[1].split('>')[0].lower()
                 except IndexError:
                     print('')
+                    print('-' * 10)
                     print(f'{login} made a commit that cannot be processed:')
                     print(message)
                     print('')

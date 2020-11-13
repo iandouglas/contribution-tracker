@@ -193,10 +193,19 @@ if __name__ == '__main__':
             org_stats[repo.name.lower()] = stats
 
         print('')
+        print('')
         consolodate = input('Want me to combine all stats by user? y/n ')
+        skip_archived = 'n'
+        for repo in org_stats:
+            if org_stats[repo]['archived']:
+                skip_archived = input('Skip archived repos? y/n ')
+                skip_archived = skip_archived.strip().lower()
+                break;
         if consolodate.strip().lower() == 'y':
             users = {}
             for repo in org_stats:
+                if org_stats[repo]['archived'] and skip_archived == 'y':
+                    continue
                 contribs = org_stats[repo]['contributors']
                 for user in contribs:
                     if user not in users:
@@ -227,7 +236,7 @@ if __name__ == '__main__':
                     users[user]['repos'].append(repo)
             with open(f'stats/{org.login.lower()}/'
                       f'_org_stats.json', 'w') as f:
-                f.write(json.dumps(stats, sort_keys=True, indent=2))
+                f.write(json.dumps(users, sort_keys=True, indent=2))
 
 
     print("\ndone, check stats folder for output")

@@ -112,7 +112,7 @@ def repo_stats(repo):
                 co_author = emails[email]
                 if co_author not in contribs:
                     contribs[co_author] = {
-                        'login': co_author,
+                        'name': co_author,
                         'authored': {
                             'add': 0,
                             'del': 0,
@@ -150,9 +150,9 @@ if __name__ == '__main__':
         print('and "admin:org" scopes)')
         sys.exit()
 
-    repo_or_org = input('Enter GitHub Organization or Repo URL, ie "turingschool" or "turingschool/backend-curriculum-site": ')
-    repo_or_org = repo_or_org.strip()
-    # repo_or_org = "My-Solar-Garden"
+    # repo_or_org = input('Enter GitHub Organization or Repo URL, ie "turingschool" or "turingschool/backend-curriculum-site": ')
+    # repo_or_org = repo_or_org.strip()
+    repo_or_org = "My-Solar-Garden"
 
     print(f'Checking {repo_or_org} for access...')
 
@@ -177,6 +177,7 @@ if __name__ == '__main__':
     else:
         print('getting stats for organization')
         org = g.get_organization(repo_or_org)
+        org_stats = {}
         for repo in org.get_repos():
             print('')
             print('')
@@ -189,5 +190,45 @@ if __name__ == '__main__':
             with open(f'stats/{org.login.lower()}/'
                       f'{repo.name.lower()}.json', 'w') as f:
                 f.write(json.dumps(stats, sort_keys=True, indent=2))
+            org_stats[repo.name.lower()] = stats
+            break
+
+        print('')
+        consolodate = input('Want me to combine all stats by user? y/n ')
+        if consolodate.strip().lower() == 'y':
+            users = {}
+            for repo in org_stats:
+                contribs = org_stats[repo]['contributors']
+                for user in contribs:
+                    if user not in users:
+                        users[user] = {
+                            'name': '',
+                            'authored': {
+                                'add': 0,
+                                'del': 0,
+                                'total': 0,
+                            },
+                            'co-authored': {
+                                'add': 0,
+                                'del': 0,
+                                'total': 0,
+                            },
+                            'repos': []
+                        }
+                    if 'name' in contribs[user]:
+                        users[user]['name'] = contribs[user]['name']
+                    elif 'login' in contribs[user]:
+                        users[user]['name'] = contribs[user]['login']
+                    users[user]['authored']['add'] += contribs[user]['authored']['add']
+                    users[user]['authored']['del'] += contribs[user]['authored']['del']
+                    users[user]['authored']['total'] += contribs[user]['authored']['total']
+                    users[user]['co-authored']['add'] += contribs[user]['co-authored']['add']
+                    users[user]['co-authored']['del'] += contribs[user]['co-authored']['del']
+                    users[user]['co-authored']['total'] += contribs[user]['co-authored']['total']
+                    users[user]['repos'].append(repo)
+            with open(f'stats/{org.login.lower()}/'
+                      f'_org_stats.json', 'w') as f:
+                f.write(json.dumps(stats, sort_keys=True, indent=2))
+
 
     print("\ndone, check stats folder for output")

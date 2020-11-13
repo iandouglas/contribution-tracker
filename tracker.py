@@ -1,4 +1,5 @@
 import json
+import os
 import sys
 from os import path
 from github import Github
@@ -79,7 +80,16 @@ def repo_stats(repo):
         for line in message.split("\n"):
             email = None
             if 'Co-authored-by' in line:
-                email = line.split('<')[1].split('>')[0].lower()
+                try:
+                    email = line.split('<')[1].split('>')[0].lower()
+                except IndexError:
+                    print('')
+                    print(f'{login} made a commit that cannot be processed:')
+                    print(message)
+                    print('')
+                    print('specifically, this line:')
+                    print(line)
+                    email = input('please enter an email to use here: ')
                 login = None
                 if email in emails:
                     if emails[email] == user.login.lower():
@@ -142,7 +152,7 @@ if __name__ == '__main__':
 
     repo_or_org = input('Enter GitHub Organization or Repo URL, ie "turingschool" or "turingschool/backend-curriculum-site": ')
     repo_or_org = repo_or_org.strip()
-    # repo_or_org = "My-Solar-Garden/hardware"
+    # repo_or_org = "My-Solar-Garden"
 
     print(f'Checking {repo_or_org} for access...')
 
@@ -156,27 +166,28 @@ if __name__ == '__main__':
         print('getting stats for single repo')
         repo = g.get_repo(repo_or_org)
         stats = repo_stats(repo)
+        org_name = repo_or_org.split("/")[0].lower()
+        try:
+            os.mkdir(f'stats/{org_name}')
+        except FileExistsError:
+            pass
+        with open(f'stats/{org_name}/{repo.name.lower()}.json', 'w') as f:
+            f.write(json.dumps(stats, sort_keys=True, indent=2))
+
     else:
         print('getting stats for organization')
         org = g.get_organization(repo_or_org)
         for repo in org.get_repos():
-            stats[repo.name] = repo_stats(repo)
+            print('')
+            print('')
+            print(f'Processing {repo.name}')
+            try:
+                os.mkdir(f'stats/{org.login.lower()}')
+            except FileExistsError:
+                pass
+            stats = repo_stats(repo)
+            with open(f'stats/{org.login.lower()}/'
+                      f'{repo.name.lower()}.json', 'w') as f:
+                f.write(json.dumps(stats, sort_keys=True, indent=2))
 
-    print('')
-    print(json.dumps(stats, sort_keys=True, indent=2))
-
-
-# contents = repo.get_top_paths()
-#
-# contents = repo.get_top_referrers()
-#
-# sha = 'abc123'
-# commit = repo.get_commit(sha=sha)
-
-# https://api.github.com/orgs/{org_name}/members
-# https://api.github.com/orgs/{org_name}/members/member
-# https://api.github.com/orgs/{org_name}/repos
-# https://api.github.com/repos/{org_name}/{repo_name}/git/commits
-# https://api.github.com/repos/{org_name}/{repo_name}/contributors
-# https://api.github.com/repos/{org_name}/{repo_name}/collaborators
-# https://api.github.com/repos/{org_name}/{repo_name}/collaborators/{collaborator_name}
+    print("\ndone, check stats folder for output")

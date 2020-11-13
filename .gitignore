@@ -2,3 +2,4 @@
 .idea
 users.json
 auth.py
+stats/*

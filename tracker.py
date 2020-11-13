@@ -191,7 +191,6 @@ if __name__ == '__main__':
                       f'{repo.name.lower()}.json', 'w') as f:
                 f.write(json.dumps(stats, sort_keys=True, indent=2))
             org_stats[repo.name.lower()] = stats
-            break
 
         print('')
         consolodate = input('Want me to combine all stats by user? y/n ')

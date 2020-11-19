@@ -258,12 +258,13 @@ if __name__ == '__main__':
                         contributors[user]['authored']['del']
                     users[user]['authored']['total'] += \
                         contributors[user]['authored']['total']
-                    users[user]['co-authored']['add'] += \
-                        contributors[user]['co-authored']['add']
-                    users[user]['co-authored']['del'] += \
-                        contributors[user]['co-authored']['del']
-                    users[user]['co-authored']['total'] += \
-                        contributors[user]['co-authored']['total']
+                    if 'co-authored' in contributors[user]:
+                        users[user]['co-authored']['add'] += \
+                            contributors[user]['co-authored']['add']
+                        users[user]['co-authored']['del'] += \
+                            contributors[user]['co-authored']['del']
+                        users[user]['co-authored']['total'] += \
+                            contributors[user]['co-authored']['total']
                     users[user]['repos'].append(repo)
 
             with open(f'stats/{org.login.lower()}/'

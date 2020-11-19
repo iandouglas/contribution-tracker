@@ -183,14 +183,14 @@ if __name__ == '__main__':
                   'make sure you have access to the repo')
             sys.exit()
 
-        repo_stats = repo_stats(repo)
+        r_stats = repo_stats(repo)
         org_name = repo_or_org.split("/")[0].lower()
         try:
             os.mkdir(f'stats/{org_name}')
         except FileExistsError:
             pass
         with open(f'stats/{org_name}/{repo.name.lower()}.json', 'w') as f:
-            f.write(json.dumps(repo_stats, sort_keys=True, indent=2))
+            f.write(json.dumps(r_stats, sort_keys=True, indent=2))
 
     else:
         print('getting stats for organization')
@@ -210,11 +210,11 @@ if __name__ == '__main__':
                 os.mkdir(f'stats/{org.login.lower()}')
             except FileExistsError:
                 pass
-            repo_stats = repo_stats(repo)
+            r_stats = repo_stats(repo)
             with open(f'stats/{org.login.lower()}/'
                       f'{repo.name.lower()}.json', 'w') as f:
-                f.write(json.dumps(repo_stats, sort_keys=True, indent=2))
-            org_stats[repo.name.lower()] = repo_stats
+                f.write(json.dumps(r_stats, sort_keys=True, indent=2))
+            org_stats[repo.name.lower()] = r_stats
 
         print('')
         print('')

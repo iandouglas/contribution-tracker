@@ -27,10 +27,29 @@ and include it.
 ## To run the tracker
 
 ```bash
-python tracker.py
+python tracker.py -h h
+```
+The `-h` switch will display command-line help.
+
+Typical usage will be something like this:
+
+```
+python tracker.py https://github.com/iandouglas/contribution-tracker
 ```
 
-You will be prompted for an organization name or a repo name.
+There are switches to turn on/off co-author checking, supression of stats if no co-authoring was done, and more.
+
+If you include the `-i` switch, the application will run in 'interactive' mode.
+
+You will be prompted for a URL of a GitHub organization name or a repo name, for example:
+
+Organization:
+* https://github.com/TuringSchool
+
+or
+
+Individual Repo:
+* https://github.com/iandouglas/contribution-tracker
 
 If co-authored commits are used, it will attempt to parse those. However, if
 the GitHub user hides their email address from being public and your commit
@@ -45,8 +64,9 @@ Likewise, if the co-authored-by string doesn't follow the proper syntax of
 ```
 Co-authored-by: Real Name <email@address.com>
 ```
-Then you will be prompted to enter an email address. This will not be saved
-for subsequent runs.
+Then you will be prompted to enter an email address. You will be asked if you want to save this for the future.
+
+Since some plugins for Atom and VS Code are notorious for wrapping co-author lines onto new lines, the application will do its best to spot when this is happening, and correct the commit message.
 
 Commits which are merges done on github.com (ie, merging a pull request) is
 not counted toward anyone's total.

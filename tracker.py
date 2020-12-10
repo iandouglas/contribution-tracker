@@ -75,7 +75,7 @@ def repo_stats(repo):
     print(f'processing {commits.totalCount} commits:')
     for commit in commits.reversed:
         print('.', end='', flush=True)
-        message = commit.commit.message
+        message = commit.commit.message.lower()
         stats = commit.stats
         users.append(commit.committer)
         user = commit.committer
@@ -98,24 +98,24 @@ def repo_stats(repo):
 
         coauthors = [login]
         new_msg = []
-        if 'Co-authored-by' in message:
+        if 'co-authored-by' in message:
             combine = False
             for line in message.split("\n"):
-                if 'Co-authored-by' not in line and not combine:
+                if 'co-authored-by' not in line and not combine:
                     new_msg.append(line)
-                if 'Co-authored-by' not in line and combine:
+                if 'co-authored-by' not in line and combine:
                     combine = False
                     prev_line = new_msg.pop()
                     prev_line += ' ' + line
                     new_msg.append(prev_line)
-                if 'Co-authored-by' in line and '<' not in line:
+                if 'co-authored-by' in line and '<' not in line:
                     combine = True
                     new_msg.append(line)
         message = "\n".join(new_msg)
         # print(message)
         for line in message.split("\n"):
             email = None
-            if 'Co-authored-by' in line:
+            if 'co-authored-by' in line:
                 coauthor_messages_found = True
                 try:
                     first = line.split('<')

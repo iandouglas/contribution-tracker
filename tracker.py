@@ -84,6 +84,7 @@ def repo_stats(repo):
             continue
         login = user.login.lower()
         if login in ignore_users:
+            printv(f'{login} is in list of users to ignore, skipping this commit')
             continue
         if login == 'web-flow':
             # skip merge commits done on GitHub
@@ -94,13 +95,17 @@ def repo_stats(repo):
         contributors[login]['authored']['total'] += stats.total
 
         if not check_for_coauthor_commits:
+            printv('you opted to skip coauthor commits, moving on to next message')
             continue
 
         coauthors = [login]
-        new_msg = []
+        printv(f'1. commit message: {message}')
         if 'co-authored-by' in message:
+            new_msg = []
+            printv('coauthor stats possible, processing')
             combine = False
             for line in message.split("\n"):
+                printv(f'line: {line}')
                 if 'co-authored-by' not in line and not combine:
                     new_msg.append(line)
                 if 'co-authored-by' not in line and combine:
@@ -111,8 +116,13 @@ def repo_stats(repo):
                 if 'co-authored-by' in line and '<' not in line:
                     combine = True
                     new_msg.append(line)
-        message = "\n".join(new_msg)
-        # print(message)
+                if 'co-authored-by' in line and '<' in line:
+                    new_msg.append(line)
+            if len(new_msg) > 0:
+                printv(f'new msg: {new_msg}')
+                printv('assembling new commit message')
+                message = "\n".join(new_msg)
+        printv(f'2. commit message: {message}')
         for line in message.split("\n"):
             email = None
             if 'co-authored-by' in line:
@@ -157,6 +167,7 @@ def repo_stats(repo):
                         continue
                 else:
                     if email is None:
+                        printv('email blank')
                         continue
                     if email not in global_users:
                         print('found a contributor email that did not match:')
@@ -173,8 +184,10 @@ def repo_stats(repo):
                             )
                             gusers_file.close()
                     emails[email] = global_users[email]
+                    printv(f"---\n{emails}---\n")
                 co_author = emails[email]
                 if co_author in ignore_users:
+                    printv(f'coauthor {co_author} is ignored')
                     continue
                 if co_author not in contributors:
                     contributors[co_author] = {
@@ -190,7 +203,9 @@ def repo_stats(repo):
                             'total': 0,
                         },
                     }
+                    printv(f'contributors: {contributors}')
                 if co_author in coauthors:
+                    printv('coauthor in coauthors')
                     continue
                 else:
                     coauthors.append(co_author)
@@ -202,7 +217,9 @@ def repo_stats(repo):
                         stats.additions - stats.deletions
 
     if strip_coauthor_if_none and not coauthor_messages_found:
+        printv('strip if none and no coauth found')
         for contributor in contributors:
+            printv(f'deleting {contributor}')
             del contributors[contributor]['co-authored']
 
     details = {
@@ -221,7 +238,6 @@ def usage():
     print('-i          turn on interactive mode')
     print('')
     print('-c          scan commit messages for co-author commits')
-    print('--coauthor  scan commit messages for co-author commits')
     print('            default behavior is to scan for co-author commits')
     print('')
     print('-g=user1,user2               ignore a comma-delimited list of github usernames')

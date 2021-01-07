@@ -2,23 +2,32 @@ import json
 import os
 import sys
 from os import path
+import re
 import getopt
 import github
 
-try:
-    users_file = open('users.json', 'r')
-    global_users = json.loads(users_file.read())
-except FileNotFoundError:
-    f = open('users.json', 'w')
-    f.write('{}')
-    f.close()
-try:
-    emails_file = open('emails.json', 'r')
-    global_emails = json.loads(emails_file.read())
-except FileNotFoundError:
-    f = open('emails.json', 'w')
-    f.write('{}')
-    f.close()
+
+def dump_json_file(input_data, filename):
+    output_file = open(filename, 'w')
+    output_file.write(json.dumps(
+        input_data, sort_keys=True, indent=2)
+    )
+    output_file.close()
+
+def open_or_create_file(filename, create=True):
+    try:
+        input_file = open(filename, 'r')
+        return json.loads(input_file.read())
+    except FileNotFoundError:
+        if create:
+            f = open(filename, 'w')
+            f.write('{}')
+            f.close()
+        return {}
+
+global_users = open_or_create_file('users.json')
+global_emails = open_or_create_file('emails.json')
+
 
 verbose = False
 check_for_coauthor_commits = True
@@ -66,12 +75,13 @@ def repo_stats(repo):
             emails[email] = login
 
     if len(emails) > 0:
-        print('known contributors:')
+        printv('known contributors:')
         for email, login in emails.items():
-            print(f'  {email}: {login}')
+            printv(f'  {email}: {login}')
 
     users = []
     commits = repo.get_commits().reversed
+    print(f'repo: {repo.full_name}')
     print(f'processing {commits.totalCount} commits:')
     for commit in commits.reversed:
         print('.', end='', flush=True)
@@ -152,13 +162,9 @@ def repo_stats(repo):
                         email = input('please enter an email to use here: ')
                         remember = input('remember for next time? y/n ')
                         remember = remember.strip().lower()
+                        global_emails[name] = email
                         if remember == 'y':
-                            global_emails[name] = email
-                            gusers_file = open('emails.json', 'w')
-                            gusers_file.write(json.dumps(
-                                global_emails, sort_keys=True, indent=2)
-                            )
-                            gusers_file.close()
+                            dump_json_file(global_emails, 'emails.json')
                     else:
                         email = global_emails[name]
                 login = None
@@ -170,19 +176,22 @@ def repo_stats(repo):
                         printv('email blank')
                         continue
                     if email not in global_users:
-                        print('found a contributor email that did not match:')
-                        print(line)
-                        login = input(f'enter github username for {email}: ')
-                        emails[email] = login.strip().lower()
-                        remember = input('remember for next time? y/n ')
-                        remember = remember.strip().lower()
-                        if remember == 'y':
+                        m = re.match(
+                            "^(\d+)\+([^@]+)@users.noreply.github.com", email)
+                        if m:
+                            username = m.groups()[1]
+                            global_users[email] = username
+                            dump_json_file(global_users, 'users.json')
+                        else:
+                            print('found a contributor email that did not match:')
+                            print(line)
+                            login = input(f'enter github username for {email}: ')
+                            emails[email] = login.strip().lower()
+                            remember = input('remember for next time? y/n ')
+                            remember = remember.strip().lower()
                             global_users[email] = login
-                            gusers_file = open('users.json', 'w')
-                            gusers_file.write(json.dumps(
-                                global_users, sort_keys=True, indent=2)
-                            )
-                            gusers_file.close()
+                            if remember == 'y':
+                                dump_json_file(global_users, 'users.json')
                     emails[email] = global_users[email]
                     printv(f"---\n{emails}---\n")
                 co_author = emails[email]
@@ -226,7 +235,7 @@ def repo_stats(repo):
         'archived': repo.archived,
         'contributors': contributors
     }
-
+    print("\n")
     return details
 
 
@@ -237,23 +246,25 @@ def usage():
     print('-v          turn on verbose output')
     print('-i          turn on interactive mode')
     print('')
-    print('-c          scan commit messages for co-author commits')
-    print('            default behavior is to scan for co-author commits')
-    print('')
-    print('-g=user1,user2               ignore a comma-delimited list of github usernames')
-    print('--ignore-users=user1=user2   ignore a comma-delimited list of github usernames')
-    print('')
-    print('--skip-coauthor       skip processing commit messages for co-authors')
+    print('-c                scan commit messages for co-author commits')
+    print('--do-coauthor     scan commit messages for co-author commits')
+    print('                  default behavior IS TO SCAN for co-author commits')
+    print('--skip-coauthor   skip processing commit messages for co-authors')
     print('')
     print('--skip-coauth-stats   remove co-author stats if there are none')
-    print('                      default is to suppress stats if there are none')
+    print('                      default IS TO SUPPRESS stats if there are none')
+    print('--include-coauth-stats   include blank co-author stats if there are none')
+    print('')
+    print('-g=user1,user2               ignore a comma-delimited list of github usernames')
+    print('--ignore-users=user1,user2   ignore a comma-delimited list of github usernames')
+    print('')
 
 
 if __name__ == '__main__':
     interactive_mode = False
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "hcviu:g", ['help', 'combine-user-stats', 'ignore-users=', 'do-coauthor', 'skip-coauthor', 'skip-coauth-stats'])
+        opts, args = getopt.getopt(sys.argv[1:], "hcviu:g", ['help', 'combine-user-stats', 'ignore-users=', 'do-coauthor', 'skip-coauthor', 'skip-coauth-stats', 'include-coauth-stats'])
     except getopt.GetoptError as err:
         print(err)
         usage()
@@ -279,6 +290,8 @@ if __name__ == '__main__':
             strip_coauthor_if_none = True
         elif o in ('--skip-coauth-stats'):
             strip_coauthor_if_none = True
+        elif o in ('--include-coauth-stats'):
+            strip_coauthor_if_none = False
     
     if len(args):
         repo_or_org = args[0]
@@ -324,9 +337,8 @@ if __name__ == '__main__':
             if strip_coauthor_if_none.strip().lower() == 'n':
                 strip_coauthor_if_none = False
 
-    slashes = sum(map(lambda x: 1 if '/' in repo_or_org else 0, repo_or_org))
     repo_or_org = repo_or_org.replace('https://github.com/', '')
-    if slashes > 3:
+    if '/' in repo_or_org: # single repo
         printv('getting stats for single repo')
         try:
             repo = g.get_repo(repo_or_org)
@@ -363,9 +375,12 @@ if __name__ == '__main__':
             except FileExistsError:
                 pass
             r_stats = repo_stats(repo)
-            with open(f'stats/{org.login.lower()}/'
-                      f'{repo.name.lower()}.json', 'w') as f:
-                f.write(json.dumps(r_stats, sort_keys=True, indent=2))
+
+            dump_json_file(
+                r_stats, 
+                f'stats/{org.login.lower()}/{repo.name.lower()}.json'
+            )
+
             org_stats[repo.name.lower()] = r_stats
 
         printv('')
@@ -420,8 +435,7 @@ if __name__ == '__main__':
                             contributors[user]['co-authored']['total']
                     users[user]['repos'].append(repo)
 
-            with open(f'stats/{org.login.lower()}/'
-                      f'_org_stats.json', 'w') as f:
-                f.write(json.dumps(users, sort_keys=True, indent=2))
+            dump_json_file(users, f'stats/{org.login.lower()}/_org_stats.json')
+
     print('')
     print("done, check stats folder for output")

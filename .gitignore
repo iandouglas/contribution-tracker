@@ -3,3 +3,6 @@
 users.json
 auth.py
 stats/*
+__pycache__
+emails.json
+env

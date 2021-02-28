@@ -2,6 +2,7 @@ import json
 import os
 import sys
 from os import path
+from shutil import copyfile
 import re
 import getopt
 import github
@@ -13,6 +14,14 @@ def dump_json_file(input_data, filename):
         input_data, sort_keys=True, indent=2)
     )
     output_file.close()
+
+def dump_js_data_file(input_data, filename):
+    output_file = open(filename, 'w')
+    output_file.write("var data = " + json.dumps(
+        input_data, sort_keys=True, indent=2)
+    )
+    output_file.close()
+
 
 def open_or_create_file(filename, create=True):
     try:
@@ -322,7 +331,7 @@ if __name__ == '__main__':
             strip_coauthor_if_none = True
         elif o in ('--include-coauth-stats'):
             strip_coauthor_if_none = False
-    
+
     if len(args):
         repo_or_org = args[0]
 
@@ -407,7 +416,7 @@ if __name__ == '__main__':
             r_stats = repo_stats(repo)
 
             dump_json_file(
-                r_stats, 
+                r_stats,
                 f'stats/{org.login.lower()}/{repo.name.lower()}.json'
             )
 
@@ -466,6 +475,9 @@ if __name__ == '__main__':
                     users[user]['repos'].append(repo)
 
             dump_json_file(users, f'stats/{org.login.lower()}/_org_stats.json')
+            dump_js_data_file(users, f'stats/{org.login.lower()}/data.js')
+            copyfile('./.templates/index.html', f'stats/{org.login.lower()}/index.html')
+            copyfile('./.templates/main.js', f'stats/{org.login.lower()}/main.js')
 
     print('')
     print("done, check stats folder for output")

@@ -85,17 +85,42 @@ def repo_stats(repo):
     print(f'processing {commits.totalCount} commits:')
     for commit in commits.reversed:
         print('.', end='', flush=True)
+        printv('-'*100)
+        printv(f'commit.commit.message: {commit.commit.message}')
         message = commit.commit.message.lower()
         stats = commit.stats
+        printv(f'committer: {commit.committer}')
         users.append(commit.committer)
         user = commit.committer
 
-        if user is None:
-            continue
-        login = user.login.lower()
-        if login in ignore_users:
-            printv(f'{login} is in list of users to ignore, skipping this commit')
-            continue
+        login = None
+        printv(f'user obj repr: {user}')
+        try:
+            if user.login is not None:
+                login = user.login.lower()
+                if login in ignore_users:
+                    printv(f'{login} is in list of users to ignore, skipping this commit')
+                    continue
+        except AttributeError:
+            login = 'unknown_github_user_cannot_track'
+        except github.GithubException:
+            login = 'unknown_github_user_cannot_track'
+
+        if login == 'unknown_github_user_cannot_track' and login not in contributors:
+            contributors[login] = {
+                'name': login,
+                'authored': {
+                    'add': 0,
+                    'del': 0,
+                    'total': 0,
+                },
+                'co-authored': {
+                    'add': 0,
+                    'del': 0,
+                    'total': 0,
+                }
+            }
+
         if login == 'web-flow':
             # skip merge commits done on GitHub
             continue
@@ -169,7 +194,12 @@ def repo_stats(repo):
                         email = global_emails[name]
                 login = None
                 if email in emails:
-                    if emails[email] == user.login.lower():
+                    try:
+                        if emails[email] == user.login.lower():
+                            continue
+                    except AttributeError:
+                        continue
+                    except github.GithubException:
                         continue
                 else:
                     if email is None:
